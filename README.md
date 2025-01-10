@@ -1,7 +1,7 @@
 # rustbrush
 Painting app and utilities in Rust. Uses `pixels`, `wgpu` and `winit`.
 
-[![image](https://github.com/user-attachments/assets/6f225fba-e16f-467a-ab87-8d1ab330ab8c)](https://github.com/BrianWiz/rustbrush)
+![image](https://github.com/user-attachments/assets/f3d0c1d7-95f7-4019-80e8-8e9cc973bfd1)
 
 ## !!!A work in progress!!!
 This project is still in a prototype phase, and as it stands it's not much at all. The goal is to create a simple painting app that can be used to draw simple images. At this point it is highly experimental as I've never done something like this before.
