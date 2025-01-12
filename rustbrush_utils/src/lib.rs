@@ -1,9 +1,9 @@
 pub mod operations;
 
-const RED_CHANNEL: usize = 0;
-const GREEN_CHANNEL: usize = 1;
-const BLUE_CHANNEL: usize = 2;
-const ALPHA_CHANNEL: usize = 3;
+pub const RED_CHANNEL: usize = 0;
+pub const GREEN_CHANNEL: usize = 1;
+pub const BLUE_CHANNEL: usize = 2;
+pub const ALPHA_CHANNEL: usize = 3;
 
 /// A pixel is a single point in a pixel buffer with an RGBA color value.
 pub struct Pixel {

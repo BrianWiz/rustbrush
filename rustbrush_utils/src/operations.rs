@@ -1,7 +1,5 @@
 use crate::{Brush, ALPHA_CHANNEL, BLUE_CHANNEL, GREEN_CHANNEL, RED_CHANNEL};
 
-
-
 /// Paints a brush stroke on the pixel buffer
 /// Example usage:
 /// ```rust
@@ -61,7 +59,7 @@ impl PaintOperation<'_> {
 
                     let alpha = pixel.color[ALPHA_CHANNEL] as f32 / 255.0;
                     if self.is_eraser {
-                        let current_alpha = self.pixel_buffer[index + 3] as f32 / 255.0;
+                        let current_alpha = self.pixel_buffer[index + ALPHA_CHANNEL] as f32 / 255.0;
                         let erase_strength = alpha * self.brush.opacity();
                         self.pixel_buffer[index + ALPHA_CHANNEL] = ((current_alpha * (1.0 - erase_strength)) * 255.0) as u8;
                     } else {
