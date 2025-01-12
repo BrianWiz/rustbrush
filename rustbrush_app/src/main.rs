@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let filter = EnvFilter::builder()
         .with_default_directive(LevelFilter::INFO.into())
         .parse("wgpu=warn")?
-        .add_directive("meshy=info".parse()?);
+        .add_directive("rustbrush_app=info".parse()?);
 
     tracing_subscriber::fmt()
         .with_env_filter(filter)

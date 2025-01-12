@@ -37,7 +37,6 @@ impl RenderState {
                     width,
                     height,
                 },
-                current_layer: 0,
                 dirty: true,
             }
         }

@@ -1,6 +1,6 @@
-use rustbrush_utils::{operations::{PaintOperation, SmearOperation}, Brush};
+use rustbrush_utils::operations::{PaintOperation, SmearOperation};
 
-use crate::user::action::{BrushStrokeFrame, BrushStrokeKind};
+use crate::user::user::{BrushStrokeFrame, BrushStrokeKind};
 
 pub struct CanvasState {
     pub layers: Vec<Vec<u8>>,
@@ -10,20 +10,26 @@ pub struct CanvasState {
 
 pub struct Canvas {
     pub state: CanvasState,
-    pub current_layer: usize,
     pub dirty: bool,
 }
 
 impl Canvas {
-    pub fn process_brush_stroke_frame(&mut self, kind: BrushStrokeKind, frame: &BrushStrokeFrame) {
+    pub fn process_brush_stroke_frame(&mut self, layer: usize, kind: BrushStrokeKind, frame: &BrushStrokeFrame) {
         match kind {
-            BrushStrokeKind::Paint => self.paint(&frame),
-            BrushStrokeKind::Erase => self.erase(&frame),
-            BrushStrokeKind::Smudge => self.smudge(&frame),
+            BrushStrokeKind::Paint => self.paint(layer, &frame),
+            BrushStrokeKind::Erase => self.erase(layer, &frame),
+            BrushStrokeKind::Smudge => self.smudge(layer, &frame),
         }
     }
 
-    fn paint(&mut self, frame: &BrushStrokeFrame) {
+    pub fn clear(&mut self) {
+        self.dirty = true;
+        for layer in self.state.layers.iter_mut() {
+            layer.iter_mut().for_each(|pixel| *pixel = 0);
+        }
+    }
+
+    fn paint(&mut self, layer: usize, frame: &BrushStrokeFrame) {
         self.dirty = true;
         PaintOperation {
             brush: &frame.brush,
@@ -31,14 +37,14 @@ impl Canvas {
             cursor_position: frame.cursor_position,
             last_cursor_position: frame.last_cursor_position,
             is_eraser: false,
-            pixel_buffer: &mut self.state.layers[self.current_layer],
+            pixel_buffer: &mut self.state.layers[layer],
             pixel_buffer_width: self.state.width,
             pixel_buffer_height: self.state.height,
         }
             .process();
     }
 
-    fn erase(&mut self, frame: &BrushStrokeFrame) {
+    fn erase(&mut self, layer: usize, frame: &BrushStrokeFrame) {
         self.dirty = true;
         PaintOperation {
             brush: &frame.brush,
@@ -46,21 +52,21 @@ impl Canvas {
             cursor_position: frame.cursor_position,
             last_cursor_position: frame.last_cursor_position,
             is_eraser: true,
-            pixel_buffer: &mut self.state.layers[self.current_layer],
+            pixel_buffer: &mut self.state.layers[layer],
             pixel_buffer_width: self.state.width,
             pixel_buffer_height: self.state.height,
         }
             .process();
     }
 
-    fn smudge(&mut self, frame: &BrushStrokeFrame) {
+    fn smudge(&mut self, layer: usize, frame: &BrushStrokeFrame) {
         self.dirty = true;
         SmearOperation {
             brush: &frame.brush,
             cursor_position: frame.cursor_position,
             last_cursor_position: frame.last_cursor_position,
             smear_strength: 1.0, // @todo: doesn't belong here
-            pixel_buffer: &mut self.state.layers[self.current_layer],
+            pixel_buffer: &mut self.state.layers[layer],
             pixel_buffer_width: self.state.width,
             pixel_buffer_height: self.state.height,
         }

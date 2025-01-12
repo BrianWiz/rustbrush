@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-use tracing::error;
+use tracing::{error, info};
 use winit::{
-    application::ApplicationHandler, event::WindowEvent, event_loop::ActiveEventLoop, platform::windows::{Color, WindowAttributesExtWindows}, window::{Window, WindowId}
+    application::ApplicationHandler, event::{ElementState, KeyEvent, WindowEvent}, event_loop::ActiveEventLoop, keyboard::{KeyCode, PhysicalKey}, platform::windows::{Color, WindowAttributesExtWindows}, window::{Window, WindowId}
 };
-use crate::{render::{self, state::RenderState}, user::action::{BrushStrokeKind, User}};
+use crate::{render::state::RenderState, user::user::{BrushStrokeKind, User}};
 
 #[derive(Default)]
 pub struct App {
@@ -23,7 +23,6 @@ impl ApplicationHandler for App {
 
         let window = Arc::new(window);
         self.window = Some(window.clone());
-
         self.render_state = Some(RenderState::new(window, 800, 600));
     }
 
@@ -57,8 +56,8 @@ impl ApplicationHandler for App {
 
                 if let Some(render_state) = &mut self.render_state {
 
-                    if let Some(frame_and_kind) = brush_stroke_frame {
-                        render_state.canvas.process_brush_stroke_frame(frame_and_kind.0, frame_and_kind.1);
+                    if let Some(frame_layer_and_kind) = brush_stroke_frame {
+                        render_state.canvas.process_brush_stroke_frame(frame_layer_and_kind.0, frame_layer_and_kind.1, frame_layer_and_kind.2);
                     }
 
                     match render_state.render() {
@@ -94,7 +93,26 @@ impl ApplicationHandler for App {
                     },
                 }
             },
-            WindowEvent::KeyboardInput {..} => {},
+            WindowEvent::ModifiersChanged(modifiers) => {
+                self.user.holding_ctrl = modifiers.state().control_key();
+            },
+            WindowEvent::KeyboardInput { 
+                event: KeyEvent { 
+                    physical_key,
+                    state: ElementState::Pressed,
+                    ..
+                },
+                ..
+            } => {
+                if let Some(render_state) = &mut self.render_state {
+                    let mut canvas = &mut render_state.canvas;
+                    if self.user.holding_ctrl && physical_key == PhysicalKey::Code(KeyCode::KeyZ) {
+                        self.user.undo(&mut canvas);
+                    } else if self.user.holding_ctrl && physical_key == PhysicalKey::Code(KeyCode::KeyY) {
+                        self.user.redo(&mut canvas);
+                    }
+                }
+            },
             _ => {},
         }
     }
