@@ -17,6 +17,7 @@ pub struct Stamp {
     pub pixels: Vec<Pixel>,
 }
 
+#[derive(Clone)]
 pub struct BrushBaseSettings {
     pub id: String,
     pub radius: f32,
@@ -24,6 +25,7 @@ pub struct BrushBaseSettings {
     pub opacity: f32,
 }
 
+#[derive(Clone)]
 pub enum Brush {
     SoftCircle { 
         hardness: f32,

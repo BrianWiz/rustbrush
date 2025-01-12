@@ -2,21 +2,15 @@ use std::sync::Arc;
 
 use tracing::error;
 use winit::{
-    application::ApplicationHandler,
-    event::WindowEvent,
-    event_loop::ActiveEventLoop,
-    window::{Window, WindowId},
+    application::ApplicationHandler, event::WindowEvent, event_loop::ActiveEventLoop, platform::windows::{Color, WindowAttributesExtWindows}, window::{Window, WindowId}
 };
-use crate::render::state::RenderState;
+use crate::{render::{self, state::RenderState}, user::action::{BrushStrokeKind, User}};
 
 #[derive(Default)]
 pub struct App {
     window: Option<Arc<Window>>,
     render_state: Option<RenderState>,
-    cursor_position: (f32, f32),
-    last_cursor_position: (f32, f32),
-    holding_mouse_left: bool,
-    holding_mouse_right: bool,
+    user: User,
 }
 
 impl ApplicationHandler for App {
@@ -24,6 +18,7 @@ impl ApplicationHandler for App {
         let window = event_loop.create_window(
             Window::default_attributes()
                 .with_title("Brushy")
+                .with_title_background_color(Some(Color::from_rgb(0,0,0))),
         ).expect("Failed to create window");
 
         let window = Arc::new(window);
@@ -48,48 +43,58 @@ impl ApplicationHandler for App {
                 }
             },
             WindowEvent::RedrawRequested => {
-                if let Some(render_state) = &mut self.render_state {
-                    if self.holding_mouse_left {
-                        render_state.canvas.paint(self.cursor_position, self.last_cursor_position);
-                    } else if self.holding_mouse_right {
-                        render_state.canvas.smudge(self.cursor_position, self.last_cursor_position);
-                        //render_state.canvas.erase(self.cursor_position, self.last_cursor_position);
+                let brush_stroke_frame = if self.user.holding_mouse_left || self.user.holding_mouse_right {
+                    match self.user.continue_brush_stroke() {
+                        Ok(frame) => Some(frame),
+                        Err(e) => {
+                            error!("Error continuing brush stroke: {:?}", e);
+                            None
+                        }
                     }
+                } else {
+                    None
+                };
+
+                if let Some(render_state) = &mut self.render_state {
+
+                    if let Some(frame_and_kind) = brush_stroke_frame {
+                        render_state.canvas.process_brush_stroke_frame(frame_and_kind.0, frame_and_kind.1);
+                    }
+
                     match render_state.render() {
                         Ok(_) => {},
                         Err(e) => error!("Error rendering frame: {:?}", e),
                     }
                 }
-                self.last_cursor_position = self.cursor_position;
+                self.user.last_cursor_position = self.user.cursor_position;
                 if let Some(window) = &self.window {
                     window.request_redraw();
                 }
             },
             WindowEvent::CursorMoved { position, .. } => {
-                self.cursor_position = (position.x as f32, position.y as f32);
+                self.user.cursor_position = (position.x as f32, position.y as f32);
             },
             WindowEvent::MouseInput { state, button, .. } => {
                 match state {
                     winit::event::ElementState::Pressed => {
                         if button == winit::event::MouseButton::Left {
-                            self.holding_mouse_left = true;
+                            self.user.holding_mouse_left = true;
+                            self.user.start_brush_stroke(BrushStrokeKind::Paint);
                         } else if button == winit::event::MouseButton::Right {
-                            self.holding_mouse_right = true;
+                            self.user.holding_mouse_right = true;
+                            self.user.start_brush_stroke(BrushStrokeKind::Smudge);
                         }
                     },
                     winit::event::ElementState::Released => {
                         if button == winit::event::MouseButton::Left {
-                            self.holding_mouse_left = false;
+                            self.user.holding_mouse_left = false;
                         } else if button == winit::event::MouseButton::Right {
-                            self.holding_mouse_right = false;
+                            self.user.holding_mouse_right = false;
                         }
                     },
                 }
             },
-            WindowEvent::KeyboardInput {
-                ..
-            } => {
-            },
+            WindowEvent::KeyboardInput {..} => {},
             _ => {},
         }
     }

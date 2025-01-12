@@ -5,7 +5,7 @@ use winit::window::Window;
 use pixels::{Pixels, SurfaceTexture};
 
 use rustbrush_utils::ALPHA_CHANNEL;
-use crate::canvas::Canvas;
+use crate::canvas::{Canvas, CanvasState};
 
 pub struct RenderState {
     pub pixels: Pixels<'static>,
@@ -32,9 +32,11 @@ impl RenderState {
         Self {
             pixels,
             canvas: Canvas {
-                layers: vec![layer1, layer2],
-                width,
-                height,
+                state: CanvasState {
+                    layers: vec![layer1, layer2],
+                    width,
+                    height,
+                },
                 current_layer: 0,
                 dirty: true,
             }
@@ -53,7 +55,7 @@ impl RenderState {
         frame.fill(0); // clears the frame
 
         // merge layers into the frame
-        for layer in &self.canvas.layers {
+        for layer in self.canvas.layers() {
             for (i, chunk) in frame.chunks_mut(4).enumerate() {
                 let layer_pixel = &layer[i * 4..(i + 1) * 4];
                 
