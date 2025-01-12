@@ -65,11 +65,23 @@ impl PaintOperation<'_> {
                         let erase_strength = alpha * self.brush.opacity();
                         self.pixel_buffer[index + ALPHA_CHANNEL] = ((current_alpha * (1.0 - erase_strength)) * 255.0) as u8;
                     } else {
-                        for c in 0..4 {
-                            let current = self.pixel_buffer[index + c] as f32 / 255.0;
-                            let new = pixel.color[c] as f32 / 255.0;
-                            let result = current + (new * (1.0 - current));
-                            self.pixel_buffer[index + c] = (result * 255.0) as u8;
+                        let src_alpha = (pixel.color[ALPHA_CHANNEL] as f32 / 255.0) * self.brush.opacity();
+                        let dst_alpha = self.pixel_buffer[index + ALPHA_CHANNEL] as f32 / 255.0;
+                        
+                        let result_alpha = src_alpha + dst_alpha * (1.0 - src_alpha);
+                        self.pixel_buffer[index + ALPHA_CHANNEL] = (result_alpha * 255.0) as u8;
+                        
+                        for c in 0..3 {
+                            let src_color = pixel.color[c] as f32 / 255.0;
+                            let dst_color = self.pixel_buffer[index + c] as f32 / 255.0;
+                            
+                            let result_color = if result_alpha > 0.0 {
+                                (src_color * src_alpha + dst_color * dst_alpha * (1.0 - src_alpha)) / result_alpha
+                            } else {
+                                0.0
+                            };
+                            
+                            self.pixel_buffer[index + c] = (result_color * 255.0) as u8;
                         }
                     }
                 }

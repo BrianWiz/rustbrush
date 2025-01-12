@@ -18,7 +18,7 @@ impl Canvas {
         self.dirty = true;
         PaintOperation {
             pixel_buffer: &mut self.layers[self.current_layer],
-            brush: &Brush::default().with_opacity(0.15),
+            brush: &Brush::default().with_opacity(0.5),
             color: [255, 255, 255],
             pixel_buffer_width: self.width,
             pixel_buffer_height: self.height,
@@ -35,7 +35,7 @@ impl Canvas {
             pixel_buffer: &mut self.layers[self.current_layer],
             pixel_buffer_width: self.width,
             pixel_buffer_height: self.height,
-            brush: &Brush::default().with_opacity(0.15),
+            brush: &Brush::default().with_opacity(0.5),
             color: [0, 0, 0], // doesn't even get used for eraser so doesn't matter
             cursor_position,
             last_cursor_position,
@@ -50,7 +50,7 @@ impl Canvas {
             pixel_buffer: &mut self.layers[self.current_layer],
             pixel_buffer_width: self.width,
             pixel_buffer_height: self.height,
-            brush: &Brush::default().with_opacity(0.15),
+            brush: &Brush::default().with_opacity(0.5),
             cursor_position,
             last_cursor_position,
             smear_strength: 1.0,
