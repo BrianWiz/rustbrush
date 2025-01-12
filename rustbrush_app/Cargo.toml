@@ -17,3 +17,9 @@ pixels = "0.15.0"
 # logging
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+
+# image saving/loading
+image = "0.25.5"
+
+# time
+chrono = "0.4.39"

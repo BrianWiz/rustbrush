@@ -1,4 +1,5 @@
-use rustbrush_utils::operations::{PaintOperation, SmearOperation};
+use image::{ImageBuffer, Rgba};
+use rustbrush_utils::{operations::{PaintOperation, SmearOperation}, ALPHA_CHANNEL};
 
 use crate::user::user::{BrushStrokeFrame, BrushStrokeKind};
 
@@ -75,5 +76,38 @@ impl Canvas {
 
     pub fn layers(&self) -> &[Vec<u8>] {
         &self.state.layers
+    }
+
+    pub fn save_as_png(&self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let width = self.state.width;
+        let height = self.state.height;
+        
+        let mut merged = vec![0u8; (width * height * 4) as usize];
+        
+        for layer in self.layers() {
+            for (i, chunk) in merged.chunks_mut(4).enumerate() {
+                let layer_pixel = &layer[i * 4..(i + 1) * 4];
+                
+                let alpha = layer_pixel[3] as f32 / 255.0;
+                for c in 0..3 {
+                    let existing = chunk[c] as f32 / 255.0;
+                    let new = layer_pixel[c] as f32 / 255.0;
+                    chunk[c] = ((new * alpha + existing * (1.0 - alpha)) * 255.0) as u8;
+                }
+                
+                let existing_alpha = chunk[ALPHA_CHANNEL] as f32 / 255.0;
+                let new_alpha = alpha;
+                chunk[ALPHA_CHANNEL] = ((new_alpha + existing_alpha * (1.0 - new_alpha)) * 255.0) as u8;
+            }
+        }
+
+        let image_buffer: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::from_raw(
+            width,
+            height,
+            merged
+        ).ok_or("Failed to create image buffer")?;
+
+        image_buffer.save(path)?;
+        Ok(())
     }
 }

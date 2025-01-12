@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Instant};
 
 use tracing::{error, info};
 use winit::{
@@ -110,6 +110,12 @@ impl ApplicationHandler for App {
                         self.user.undo(&mut canvas);
                     } else if self.user.holding_ctrl && physical_key == PhysicalKey::Code(KeyCode::KeyY) {
                         self.user.redo(&mut canvas);
+                    } else if self.user.holding_ctrl && physical_key == PhysicalKey::Code(KeyCode::KeyS) {
+                        let file_name = chrono::Local::now().format("brushy_%Y-%m-%d_%H-%M-%S.png").to_string();
+                        match canvas.save_as_png(file_name.as_str()) {
+                            Ok(_) => info!("Saved as {}", file_name),
+                            Err(e) => error!("Error saving: {:?}", e),
+                        }
                     }
                 }
             },

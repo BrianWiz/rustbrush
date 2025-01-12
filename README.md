@@ -14,6 +14,13 @@ cargo run --release
 
 For testing the end user experience, it's recommended that you run in release mode as the debug mode is very slow.
 
+### Controls
+- `Left click` to paint
+- `Right click` to smudge
+- `Ctrl + Z` to undo
+- `Ctrl + Y` to redo
+- `Ctrl + S` to save
+
 ## Contributing
 Contributions are welcome! Feel free to open an issue or a pull request.
 
