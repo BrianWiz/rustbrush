@@ -1,9 +1,8 @@
 use std::time::Instant;
 
+use crate::canvas::Canvas;
 use eframe::egui::{Color32, Pos2};
 use rustbrush_utils::Brush;
-
-use crate::canvas::Canvas;
 
 pub type LayerIdx = usize;
 
@@ -138,7 +137,6 @@ impl User {
             match &mut action.data {
                 UserActionData::BrushStroke(stroke) => {
                     stroke.add_frame(BrushStrokeFrame {
-                        timestamp: Instant::now(),
                         brush,
                         color,
                         cursor_position,
@@ -213,7 +211,6 @@ impl BrushStroke {
 }
 
 pub struct BrushStrokeFrame {
-    pub timestamp: Instant,
     pub brush: Brush,
     pub color: Color32,
     pub cursor_position: Pos2,

@@ -1,11 +1,7 @@
+use crate::user::{BrushStrokeFrame, BrushStrokeKind};
 use eframe::egui::{self, Color32};
 use image::{ImageBuffer, Rgba};
-use rustbrush_utils::{
-    operations::{PaintOperation, SmearOperation},
-    ALPHA_CHANNEL,
-};
-
-use crate::user::{BrushStrokeFrame, BrushStrokeKind};
+use rustbrush_utils::operations::{PaintOperation, SmearOperation};
 
 #[derive(Clone)]
 pub struct CanvasLayer {
