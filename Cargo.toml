@@ -1,5 +1,5 @@
 [workspace]
-members = ["rustbrush_app", "rustbrush_utils"]
+members = ["rustbrush_gui", "rustbrush_utils"]
 resolver = "2"
 
 [profile]

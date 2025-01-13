@@ -1,5 +1,5 @@
 [package]
-name = "rustbrush_app"
+name = "rustbrush_gui"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,11 +8,8 @@ edition = "2021"
 # our crates
 rustbrush_utils = { path = "../rustbrush_utils" }
 
-# window manager
-winit = "0.30.8"
-
-# renderer, uses wgpu
-pixels = "0.15.0"
+# windowing and gui
+eframe = "0.30.0"
 
 # logging
 tracing = "0.1.41"

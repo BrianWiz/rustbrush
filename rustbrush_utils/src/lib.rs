@@ -1,3 +1,5 @@
+pub use ecolor::Color32;
+
 pub mod operations;
 
 pub const RED_CHANNEL: usize = 0;
@@ -27,7 +29,7 @@ pub struct BrushBaseSettings {
 
 #[derive(Clone)]
 pub enum Brush {
-    SoftCircle { 
+    SoftCircle {
         hardness: f32,
         base: BrushBaseSettings,
     },
@@ -49,7 +51,7 @@ impl Default for Brush {
 
 impl Brush {
     /// Gets a stamp for the current brush settings
-    pub fn compute_stamp(&self, color: [u8; 3]) -> Stamp {
+    pub fn compute_stamp(&self, color: ecolor::Color32) -> Stamp {
         match self {
             Brush::SoftCircle { hardness, base } => {
                 soft_circle(base.radius, *hardness, base.opacity, color)
@@ -76,6 +78,27 @@ impl Brush {
     pub fn opacity(&self) -> f32 {
         match self {
             Brush::SoftCircle { base, .. } => base.opacity,
+        }
+    }
+
+    //==========================================================================
+    // mutator methods
+    //==========================================================================
+    pub fn set_spacing(&mut self, spacing: f32) {
+        match self {
+            Brush::SoftCircle { base, .. } => base.spacing = spacing,
+        }
+    }
+
+    pub fn set_radius(&mut self, radius: f32) {
+        match self {
+            Brush::SoftCircle { base, .. } => base.radius = radius,
+        }
+    }
+
+    pub fn set_opacity(&mut self, opacity: f32) {
+        match self {
+            Brush::SoftCircle { base, .. } => base.opacity = opacity,
         }
     }
 
@@ -111,12 +134,12 @@ impl Brush {
     }
 }
 
-/// Generates a soft circle brush stamp which you can use to merge in with a pixel buffer. 
+/// Generates a soft circle brush stamp which you can use to merge in with a pixel buffer.
 /// Generally you wouldn't call this directly and instead would use `PaintOperation::process`.
-pub fn soft_circle(radius: f32, hardness: f32, opacity: f32, color: [u8; 3]) -> Stamp {
+pub fn soft_circle(radius: f32, hardness: f32, opacity: f32, color: ecolor::Color32) -> Stamp {
     let mut pixels = Vec::new();
     let radius_int = radius.ceil() as i32;
-    
+
     for y in -radius_int..=radius_int {
         for x in -radius_int..=radius_int {
             let distance = ((x * x + y * y) as f32).sqrt();
@@ -128,7 +151,7 @@ pub fn soft_circle(radius: f32, hardness: f32, opacity: f32, color: [u8; 3]) -> 
                     let t = (normalized_dist - hardness) / (1.0 - hardness);
                     (1.0 - t * t * (3.0 - 2.0 * t)).max(0.0)
                 };
-                
+
                 let alpha = (alpha * opacity * 255.0) as u8;
                 pixels.push(Pixel {
                     x,
@@ -138,6 +161,6 @@ pub fn soft_circle(radius: f32, hardness: f32, opacity: f32, color: [u8; 3]) -> 
             }
         }
     }
-    
+
     Stamp { pixels }
 }

@@ -26,7 +26,7 @@ Contributions are welcome! Feel free to open an issue or a pull request.
 
 ### Workspace Structure
 This workspace is divided into the following crates:
-- `rustbrush_app`: The main application crate.
+- `rustbrush_gui`: The main application crate.
 - `rustbrush_utils`: This is where brush operations are defined. I'd like to keep this separate as much as possible, for anyone who wants to create a painting app themselves, they may just want some small subset of operations. It's also just generally a good separation of concerns imo.
 
 ## License
