@@ -20,16 +20,15 @@ impl Default for ViewState {
     }
 }
 
-struct PixelPainter {
+struct App {
     canvas: Canvas,
-    active_layer: usize,
     view: ViewState,
     dragging_canvas: bool,
     last_drag_pos: Option<Pos2>,
     user: User,
 }
 
-impl Default for PixelPainter {
+impl Default for App {
     fn default() -> Self {
         let width = 800;
         let height = 600;
@@ -45,7 +44,6 @@ impl Default for PixelPainter {
                     height: height as u32,
                 },
             },
-            active_layer: 1,
             view: ViewState::default(),
             dragging_canvas: false,
             last_drag_pos: None,
@@ -54,7 +52,7 @@ impl Default for PixelPainter {
     }
 }
 
-impl PixelPainter {
+impl App {
     fn screen_to_canvas(&self, screen_pos: Pos2, canvas_rect: Rect) -> Pos2 {
         let relative_pos = screen_pos - canvas_rect.min - self.view.offset;
         Pos2::new(
@@ -64,7 +62,7 @@ impl PixelPainter {
     }
 }
 
-impl eframe::App for PixelPainter {
+impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let width = self.canvas.state.width as usize;
         let height = self.canvas.state.height as usize;
@@ -92,7 +90,7 @@ impl eframe::App for PixelPainter {
                 ui.heading("Pixel Painter");
                 ui.separator();
                 if ui.button("Clear Layer").clicked() {
-                    self.canvas.clear_layer(self.active_layer);
+                    self.canvas.clear_layer(self.user.current_layer);
                 }
                 if ui.button("Add Layer").clicked() {
                     self.canvas.add_layer();
@@ -117,10 +115,10 @@ impl eframe::App for PixelPainter {
                 ui.horizontal(|ui| {
                     ui.checkbox(&mut layer.visible, "");
                     if ui
-                        .selectable_label(self.active_layer == i, &layer.name)
+                        .selectable_label(self.user.current_layer == i, &layer.name)
                         .clicked()
                     {
-                        self.active_layer = i;
+                        self.user.current_layer = i;
                     }
                 });
             }
@@ -186,23 +184,47 @@ impl eframe::App for PixelPainter {
             if !self.dragging_canvas {
                 self.user.cursor_position = self.screen_to_canvas(pointer_pos, canvas_rect);
 
-                if ctx.input(|i| i.pointer.primary_pressed()) {
-                    self.user.holding_pointer_primary = true;
-                    self.user.start_brush_stroke(user::BrushStrokeKind::Paint);
-                }
+                ctx.input(|i| {
+                    if i.modifiers.ctrl || i.modifiers.command {
+                        if i.key_pressed(egui::Key::Z) {
+                            self.user.undo(&mut self.canvas);
+                        }
+                        if i.key_pressed(egui::Key::Y) {
+                            self.user.redo(&mut self.canvas);
+                        }
+                        if i.key_pressed(egui::Key::S) {
+                            let now_str = std::time::SystemTime::now()
+                                .duration_since(std::time::UNIX_EPOCH)
+                                .unwrap()
+                                .as_secs()
+                                .to_string();
+                            if let Err(e) = self
+                                .canvas
+                                .save_as_png(format!("painting_{}.png", now_str).as_str())
+                            {
+                                error!("Error saving canvas as PNG: {:?}", e);
+                            }
+                        }
+                    }
 
-                if ctx.input(|i| i.pointer.primary_released()) {
-                    self.user.holding_pointer_primary = false;
-                }
+                    if i.pointer.primary_pressed() {
+                        self.user.holding_pointer_primary = true;
+                        self.user.start_brush_stroke(user::BrushStrokeKind::Paint);
+                    }
 
-                if ctx.input(|i| i.pointer.secondary_pressed()) {
-                    self.user.start_brush_stroke(user::BrushStrokeKind::Smudge);
-                    self.user.holding_pointer_right = true;
-                }
+                    if i.pointer.secondary_pressed() {
+                        self.user.holding_pointer_right = true;
+                        self.user.start_brush_stroke(user::BrushStrokeKind::Smudge);
+                    }
 
-                if ctx.input(|i| i.pointer.secondary_released()) {
-                    self.user.holding_pointer_right = false;
-                }
+                    if i.pointer.primary_released() {
+                        self.user.holding_pointer_primary = false;
+                    }
+
+                    if i.pointer.secondary_released() {
+                        self.user.holding_pointer_right = false;
+                    }
+                });
 
                 if self.user.holding_pointer_primary || self.user.holding_pointer_right {
                     match self.user.continue_brush_stroke() {
@@ -224,10 +246,18 @@ impl eframe::App for PixelPainter {
 }
 
 fn main() -> Result<(), eframe::Error> {
+    use tracing_subscriber::filter::LevelFilter;
+    let filter = LevelFilter::DEBUG;
+    tracing_subscriber::fmt()
+        .with_max_level(filter)
+        .with_target(true)
+        .with_line_number(true)
+        .init();
+
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(
-        "Pixel Painter",
+        "Brushy",
         native_options,
-        Box::new(|_cc| Ok(Box::new(PixelPainter::default()))),
+        Box::new(|_cc| Ok(Box::new(App::default()))),
     )
 }

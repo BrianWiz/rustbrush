@@ -18,5 +18,3 @@ tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 # image saving/loading
 image = "0.25.5"
 
-# time
-chrono = "0.4.39"

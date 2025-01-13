@@ -21,7 +21,6 @@ pub struct User {
     pub last_cursor_position: Pos2,
     pub holding_pointer_primary: bool,
     pub holding_pointer_right: bool,
-    pub holding_ctrl: bool,
 }
 
 impl Default for User {
@@ -39,7 +38,6 @@ impl Default for User {
             last_cursor_position: Pos2::ZERO,
             holding_pointer_primary: false,
             holding_pointer_right: false,
-            holding_ctrl: false,
         }
     }
 }

@@ -37,7 +37,7 @@ impl PaintOperation<'_> {
                 let py = (y + pixel.y as f32) as i32;
 
                 if target_px_in_bounds((px, py), self.canvas_width, self.canvas_height) {
-                    // @todo: !!!DO NOT DELETE THIS COMMENT!!!
+                    // @todo: !!!DO NOT DELETE THIS COMMENT YET!!!
                     // It gives a really neat 3D effect to it that I want to officially support
 
                     //     let index = (py * self.canvas_width as i32 + px) as usize;
@@ -121,21 +121,6 @@ pub struct SmearOperation<'a> {
     pub smear_strength: f32,
 }
 
-fn lerp(a: u8, b: u8, t: f32) -> u8 {
-    let start = a as f32;
-    let end = b as f32;
-    ((start + (end - start) * t).round() as u8).clamp(0, 255)
-}
-
-fn lerp_color32(c1: Color32, c2: Color32, t: f32) -> Color32 {
-    Color32::from_rgba_unmultiplied(
-        lerp(c1.r(), c2.r(), t),
-        lerp(c1.g(), c2.g(), t),
-        lerp(c1.b(), c2.b(), t),
-        lerp(c1.a(), c2.a(), t),
-    )
-}
-
 impl SmearOperation<'_> {
     pub fn process(self) {
         let (x0, y0) = (self.last_cursor_position.0, self.last_cursor_position.1);
@@ -192,6 +177,21 @@ impl SmearOperation<'_> {
             }
         }
     }
+}
+
+fn lerp(a: u8, b: u8, t: f32) -> u8 {
+    let start = a as f32;
+    let end = b as f32;
+    ((start + (end - start) * t).round() as u8).clamp(0, 255)
+}
+
+fn lerp_color32(c1: Color32, c2: Color32, t: f32) -> Color32 {
+    Color32::from_rgba_unmultiplied(
+        lerp(c1.r(), c2.r(), t),
+        lerp(c1.g(), c2.g(), t),
+        lerp(c1.b(), c2.b(), t),
+        lerp(c1.a(), c2.a(), t),
+    )
 }
 
 fn target_px_in_bounds(target_px: (i32, i32), buffer_width: u32, buffer_height: u32) -> bool {
