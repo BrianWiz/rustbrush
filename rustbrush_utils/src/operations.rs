@@ -43,13 +43,11 @@ impl PaintOperation<'_> {
                 if target_px_in_bounds((px, py), self.canvas_width, self.canvas_height) {
                     let index = (py * self.canvas_width as i32 + px) as usize;
                     let current_color = Rgba::from(self.pixel_buffer[index]);
-                    let brush_color = Rgba::from_rgba_premultiplied(
-                        self.color.r(),
-                        self.color.g(),
-                        self.color.b(),
-                        self.color.a() * stamp_pixel.color.a(),
-                    );
 
+                    // NOTE: we could just simply multiply self.color by stamp_pixel.color.a()
+                    // here but it gives a "3d" effect since it multiplies all components.
+                    // Leaving note here because it may be useful in the future to do that.
+                    let brush_color = self.color.set_alpha(stamp_pixel.color.a() * self.color.a());
                     let final_color = Color32::from(brush_color.overlay(&current_color));
                     if final_color.a() > 0 {
                         self.pixel_buffer[index] = final_color;

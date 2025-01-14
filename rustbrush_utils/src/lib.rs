@@ -134,6 +134,7 @@ impl Brush {
 
 pub trait RgbaExtensions {
     fn overlay(&self, other: &Self) -> Self;
+    fn set_alpha(&self, alpha: f32) -> Self;
 }
 
 impl RgbaExtensions for Rgba {
@@ -159,6 +160,10 @@ impl RgbaExtensions for Rgba {
             new_alpha.min(1.0),
         )
     }
+
+    fn set_alpha(&self, alpha: f32) -> Self {
+        Rgba::from_rgba_premultiplied(self.r(), self.g(), self.b(), alpha)
+    }
 }
 
 fn soft_circle(radius: f32, inner_radius: f32) -> Stamp {
@@ -181,7 +186,7 @@ fn soft_circle(radius: f32, inner_radius: f32) -> Stamp {
                 pixels.push(Pixel {
                     x,
                     y,
-                    color: Rgba::from_rgba_unmultiplied(1.0, 1.0, 1.0, alpha),
+                    color: Rgba::WHITE.set_alpha(alpha),
                 });
             }
         }
