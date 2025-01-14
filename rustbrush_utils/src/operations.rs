@@ -14,8 +14,6 @@ pub struct PaintOperation<'a> {
 }
 
 impl PaintOperation<'_> {
-    /// @todo: The following code gives it a nice 3D paint effect, almost looks like actual paint, but it's not entirely intended.
-    /// It would be nice to keep this look, but also have a more traditional digital paint effect.
     pub fn process(self) {
         let (x0, y0) = (self.last_cursor_position.0, self.last_cursor_position.1);
         let (x1, y1) = (self.cursor_position.0, self.cursor_position.1);

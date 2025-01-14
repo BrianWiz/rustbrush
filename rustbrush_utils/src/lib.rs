@@ -54,7 +54,7 @@ impl Brush {
     pub fn compute_stamp(&self, color: Color32) -> Stamp {
         match self {
             Brush::SoftCircle { hardness, base } => {
-                soft_circle_flat(base.radius, *hardness, base.strength, color)
+                soft_circle_flat(base.radius, *hardness, color)
             }
         }
     }
@@ -134,37 +134,14 @@ impl Brush {
     }
 }
 
-
-fn soft_circle_with_shadowing(radius: f32, hardness: f32, strength: f32, color: Color32) -> Stamp {
+fn soft_circle_flat(radius: f32, hardness: f32, color: Color32) -> Stamp {
     let mut pixels = Vec::new();
-    let radius_int = radius.ceil() as i32;
-
-    for y in -radius_int..=radius_int {
-        for x in -radius_int..=radius_int {
-            let distance = ((x * x + y * y) as f32).sqrt();
-            if distance <= radius {
-                let alpha = compute_soft_circle_alpha(distance, radius, hardness, strength);
-                pixels.push(Pixel {
-                    x,
-                    y,
-                    color: Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), alpha),
-                });
-            }
-        }
-    }
-
-    Stamp { pixels }
-}
-
-fn soft_circle_flat(radius: f32, hardness: f32, strength: f32, color: Color32) -> Stamp {
-    let mut pixels = Vec::new();
-    let radius_int = radius.ceil() as i32;
-
-    for y in -radius_int..=radius_int {
-        for x in -radius_int..=radius_int {
-            let distance = ((x * x + y * y) as f32).sqrt();
-            if distance <= radius {
-                let alpha = compute_soft_circle_alpha(distance, radius, hardness, strength);
+    for y in -radius as i32..=radius as i32 {
+        for x in -radius as i32..=radius as i32 {
+            let distance = (x as f32 * x as f32 + y as f32 * y as f32).sqrt();
+            let alpha = (1.0 - (distance / radius).powf(hardness)).max(0.0);
+            let alpha = (alpha * 255.0).round() as u8;
+            if alpha > 0 {
                 pixels.push(Pixel {
                     x,
                     y,
@@ -175,16 +152,4 @@ fn soft_circle_flat(radius: f32, hardness: f32, strength: f32, color: Color32) -
     }
 
     Stamp { pixels }
-}
-
-fn compute_soft_circle_alpha(distance: f32, radius: f32, hardness: f32, strength: f32) -> u8 {
-    let normalized_dist = distance / radius;
-    if normalized_dist >= 1.0 {
-        0
-    } else if normalized_dist <= hardness {
-        (255.0 * strength) as u8
-    } else {
-        let t = (normalized_dist - hardness) / (1.0 - hardness);
-        ((1.0 - t) * 255.0 * strength) as u8
-    }
 }
