@@ -1,13 +1,14 @@
-use ecolor::Color32;
+use std::ops::Add;
+use ecolor::{Color32, Rgba};
 
-use crate::{Brush, ALPHA_CHANNEL};
+use crate::Brush;
 
 pub struct PaintOperation<'a> {
     pub pixel_buffer: &'a mut Vec<Color32>,
     pub canvas_width: u32,
     pub canvas_height: u32,
     pub brush: &'a Brush,
-    pub color: Color32,
+    pub color: Rgba,
     pub cursor_position: (f32, f32),
     pub last_cursor_position: (f32, f32),
     pub is_eraser: bool,
@@ -25,6 +26,7 @@ impl PaintOperation<'_> {
         let min_spacing = self.brush.radius() * self.brush.spacing();
         let steps = (distance / min_spacing).max(1.0) as i32;
 
+        let paint_color = Rgba::from(self.color);
         let stamp = self.brush.compute_stamp(self.color);
 
         for i in 0..=steps {
@@ -38,21 +40,12 @@ impl PaintOperation<'_> {
 
                 if target_px_in_bounds((px, py), self.canvas_width, self.canvas_height) {
                     let index = (py * self.canvas_width as i32 + px) as usize;
-                    let current_color = self.pixel_buffer[index];
-                    let stamp_alpha = stamp_pixel.color.a() as f32 / 255.0;
-                    let blend_strength = stamp_alpha * self.brush.strength();
+                    let current_color = Rgba::from(self.pixel_buffer[index]);
+                    let stamp_alpha = Rgba::from(stamp_pixel.color).a();
 
-                    if self.is_eraser {
-                        let new_alpha = current_color.a() as f32 * (1.0 - blend_strength);
-                        self.pixel_buffer[index] = Color32::from_rgba_unmultiplied(
-                            current_color.r(),
-                            current_color.g(),
-                            current_color.b(),
-                            new_alpha as u8,
-                        );
-                    } else {
-                        self.pixel_buffer[index] = blend_color32(current_color, stamp_pixel.color, blend_strength);
-                    }
+                    self.pixel_buffer[index] = Color32::from(
+                        current_color + paint_color * (stamp_alpha * self.brush.strength()),
+                    ).additive();
                 }
             }
         }
@@ -81,8 +74,7 @@ impl SmudgeOperation<'_> {
         let min_spacing = self.brush.radius() * self.brush.spacing();
         let steps = (distance / min_spacing).max(1.0) as i32;
 
-        // Use whatever color for stamp as we only care about the alpha values (for now?)
-        let stamp = self.brush.compute_stamp(Color32::WHITE);
+        let stamp = self.brush.compute_stamp(Rgba::WHITE);
 
         for i in 0..=steps {
             let t = i as f32 / steps as f32;
@@ -93,8 +85,7 @@ impl SmudgeOperation<'_> {
                 let px = (x + stamp_pixel.x as f32) as i32;
                 let py = (y + stamp_pixel.y as f32) as i32;
 
-                if target_px_in_bounds((px, py), self.pixel_buffer_width, self.pixel_buffer_height)
-                {
+                if target_px_in_bounds((px, py), self.pixel_buffer_width, self.pixel_buffer_height) {
                     let smudge_dx = -dx * self.smudge_strength;
                     let smudge_dy = -dy * self.smudge_strength;
 
@@ -106,37 +97,40 @@ impl SmudgeOperation<'_> {
                         self.pixel_buffer_width,
                         self.pixel_buffer_height,
                     ) {
-                        let stamp_alpha = stamp_pixel.color.a() as f32 / 255.0;
-                        let smudge_strength = stamp_alpha * self.smudge_strength;
+                        let stamp_alpha = stamp_pixel.color.a();
+                        let blend_strength = stamp_alpha * self.smudge_strength;
 
-                        if smudge_strength > 0.0 {
+                        if blend_strength > 0.0 {
                             let index = (py * self.pixel_buffer_width as i32 + px) as usize;
                             let target_index =
                                 (target_py * self.pixel_buffer_width as i32 + target_px) as usize;
                             let current_color = self.pixel_buffer[index];
                             let target_color = self.pixel_buffer[target_index];
-                            self.pixel_buffer[index] = blend_color32(current_color, target_color, smudge_strength);
+
+                            let blend = |c1: u8, c2: u8, t: f32| -> u8 {
+                                ((c1 as f32) * (1.0 - t) + (c2 as f32) * t) as u8
+                            };
+
+                            let src_alpha = target_color.a() as f32 / 255.0;
+                            let dst_alpha = current_color.a() as f32 / 255.0;
+                            let mix_factor = blend_strength;
+
+                            let out_alpha = src_alpha * mix_factor + dst_alpha * (1.0 - mix_factor);
+
+                            let new_color = Color32::from_rgba_premultiplied(
+                                blend(current_color.r(), target_color.r(), mix_factor),
+                                blend(current_color.g(), target_color.g(), mix_factor),
+                                blend(current_color.b(), target_color.b(), mix_factor),
+                                (out_alpha * 255.0) as u8,
+                            );
+
+                            self.pixel_buffer[index] = new_color;
                         }
                     }
                 }
             }
         }
     }
-}
-
-fn blend_color32(current: Color32, target: Color32, t: f32) -> Color32 {
-    let blend = |src_c: u8, dst_c: u8| -> u8 {
-        let src_color = src_c as f32;
-        let dst_color = dst_c as f32;
-        (dst_color * t + src_color * (1.0 - t)) as u8
-    };
-
-    Color32::from_rgba_premultiplied(
-        blend(current.r(), target.r()),
-        blend(current.g(), target.g()),
-        blend(current.b(), target.b()),
-        blend(current.a(), target.a()),
-    )
 }
 
 fn target_px_in_bounds(target_px: (i32, i32), buffer_width: u32, buffer_height: u32) -> bool {

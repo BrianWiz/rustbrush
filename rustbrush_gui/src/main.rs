@@ -2,8 +2,9 @@ mod canvas;
 mod user;
 
 use canvas::{Canvas, CanvasLayer, CanvasState};
-use eframe::egui::{self, Color32, Pos2, Rect, Vec2};
+use eframe::egui::{self, Color32, Pos2, Rect, Rgba, Vec2};
 use tracing::error;
+use rustbrush_utils::{ALPHA_CHANNEL, BLUE_CHANNEL, GREEN_CHANNEL, RED_CHANNEL};
 use user::User;
 
 struct ViewState {
@@ -82,7 +83,7 @@ impl eframe::App for App {
 
         // Top panel
         let mut new_brush_radius = self.user.current_paint_brush.radius();
-        let mut new_brush_color = self.user.current_color;
+        let mut new_brush_color = self.user.current_color.to_srgba_unmultiplied();
         let mut canvas_rect = Rect::NOTHING;
 
         egui::TopBottomPanel::top("controls").show(ctx, |ui| {
@@ -96,7 +97,7 @@ impl eframe::App for App {
                     self.canvas.add_layer();
                 }
                 ui.add(egui::Slider::new(&mut new_brush_radius, 1.0..=20.0).text("Brush Size"));
-                ui.color_edit_button_srgba(&mut new_brush_color);
+                ui.color_edit_button_srgba_unmultiplied(&mut new_brush_color);
                 ui.separator();
                 ui.label("View:");
                 if ui.button("Reset View").clicked() {
@@ -177,7 +178,12 @@ impl eframe::App for App {
 
         // Apply state updates
         self.user.current_paint_brush.set_radius(new_brush_radius);
-        self.user.current_color = new_brush_color;
+        self.user.current_color = Rgba::from_srgba_unmultiplied(
+            new_brush_color[RED_CHANNEL],
+            new_brush_color[GREEN_CHANNEL],
+            new_brush_color[BLUE_CHANNEL],
+            new_brush_color[ALPHA_CHANNEL],
+        );
 
         // Handle painting
         if let Some(pointer_pos) = ctx.pointer_hover_pos() {

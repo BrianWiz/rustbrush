@@ -1,13 +1,13 @@
 use std::time::Instant;
 
 use crate::canvas::Canvas;
-use eframe::egui::{Color32, Pos2};
+use eframe::egui::{Color32, Pos2, Rgba};
 use rustbrush_utils::Brush;
 
 pub type LayerIdx = usize;
 
 pub struct User {
-    pub current_color: Color32,
+    pub current_color: Rgba,
     pub current_paint_brush: Brush,
     pub current_eraser_brush: Brush,
     pub current_smudge_brush: Brush,
@@ -25,7 +25,7 @@ pub struct User {
 impl Default for User {
     fn default() -> Self {
         Self {
-            current_color: Color32::WHITE,
+            current_color: Rgba::WHITE,
             current_paint_brush: Brush::default().with_strength(1.0),
             current_eraser_brush: Brush::default().with_strength(1.0),
             current_smudge_brush: Brush::default().with_strength(1.0),
@@ -212,7 +212,7 @@ impl BrushStroke {
 
 pub struct BrushStrokeFrame {
     pub brush: Brush,
-    pub color: Color32,
+    pub color: Rgba,
     pub cursor_position: Pos2,
     pub last_cursor_position: Pos2,
 }

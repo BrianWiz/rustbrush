@@ -135,7 +135,7 @@ impl Canvas {
         self.layers()[layer].mark_dirty();
         PaintOperation {
             brush: &frame.brush,
-            color: Color32::BLACK, // doesn't even get used for eraser so doesn't matter
+            color: egui::Rgba::WHITE,
             cursor_position: (frame.cursor_position.x, frame.cursor_position.y),
             last_cursor_position: (frame.last_cursor_position.x, frame.last_cursor_position.y),
             is_eraser: true,
