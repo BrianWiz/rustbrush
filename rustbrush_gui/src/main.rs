@@ -40,8 +40,8 @@ impl Default for App {
             canvas: Canvas {
                 state: CanvasState {
                     layers,
-                    width: width as u32,
-                    height: height as u32,
+                    width,
+                    height,
                 },
             },
             view: ViewState::default(),

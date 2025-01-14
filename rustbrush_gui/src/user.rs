@@ -26,9 +26,9 @@ impl Default for User {
     fn default() -> Self {
         Self {
             current_color: Color32::WHITE,
-            current_paint_brush: Brush::default().with_opacity(0.5),
-            current_eraser_brush: Brush::default().with_opacity(0.5),
-            current_smudge_brush: Brush::default().with_opacity(0.5),
+            current_paint_brush: Brush::default().with_strength(1.0),
+            current_eraser_brush: Brush::default().with_strength(1.0),
+            current_smudge_brush: Brush::default().with_strength(1.0),
             current_layer: 0,
             current_action_id: 0,
             action_history: Vec::new(),

@@ -14,6 +14,8 @@ pub struct PaintOperation<'a> {
 }
 
 impl PaintOperation<'_> {
+    /// @todo: The following code gives it a nice 3D paint effect, almost looks like actual paint, but it's not entirely intended.
+    /// It would be nice to keep this look, but also have a more traditional digital paint effect.
     pub fn process(self) {
         let (x0, y0) = (self.last_cursor_position.0, self.last_cursor_position.1);
         let (x1, y1) = (self.cursor_position.0, self.cursor_position.1);
@@ -32,15 +34,15 @@ impl PaintOperation<'_> {
             let x = x0 + dx * t;
             let y = y0 + dy * t;
 
-            for pixel in &stamp.pixels {
-                let px = (x + pixel.x as f32) as i32;
-                let py = (y + pixel.y as f32) as i32;
+            for stamp_pixel in &stamp.pixels {
+                let px = (x + stamp_pixel.x as f32) as i32;
+                let py = (y + stamp_pixel.y as f32) as i32;
 
                 if target_px_in_bounds((px, py), self.canvas_width, self.canvas_height) {
                     let index = (py * self.canvas_width as i32 + px) as usize;
                     let current_color = self.pixel_buffer[index];
-                    let stamp_alpha = pixel.color.a() as f32 / 255.0;
-                    let blend_strength = stamp_alpha * self.brush.opacity();
+                    let stamp_alpha = stamp_pixel.color.a() as f32 / 255.0;
+                    let blend_strength = stamp_alpha * self.brush.strength();
 
                     if self.is_eraser {
                         let new_alpha = current_color.a() as f32 * (1.0 - blend_strength);
@@ -51,7 +53,7 @@ impl PaintOperation<'_> {
                             new_alpha as u8,
                         );
                     } else {
-                        self.pixel_buffer[index] = blend_color32(current_color, pixel.color, blend_strength);
+                        self.pixel_buffer[index] = blend_color32(current_color, stamp_pixel.color, blend_strength);
                     }
                 }
             }
@@ -89,9 +91,9 @@ impl SmudgeOperation<'_> {
             let x = x0 + dx * t;
             let y = y0 + dy * t;
 
-            for pixel in &stamp.pixels {
-                let px = (x + pixel.x as f32) as i32;
-                let py = (y + pixel.y as f32) as i32;
+            for stamp_pixel in &stamp.pixels {
+                let px = (x + stamp_pixel.x as f32) as i32;
+                let py = (y + stamp_pixel.y as f32) as i32;
 
                 if target_px_in_bounds((px, py), self.pixel_buffer_width, self.pixel_buffer_height)
                 {
@@ -106,7 +108,7 @@ impl SmudgeOperation<'_> {
                         self.pixel_buffer_width,
                         self.pixel_buffer_height,
                     ) {
-                        let stamp_alpha = pixel.color.a() as f32 / 255.0;
+                        let stamp_alpha = stamp_pixel.color.a() as f32 / 255.0;
                         let smudge_strength = stamp_alpha * self.smudge_strength;
 
                         if smudge_strength > 0.0 {
@@ -125,12 +127,10 @@ impl SmudgeOperation<'_> {
 }
 
 fn blend_color32(current: Color32, target: Color32, t: f32) -> Color32 {
-
     let blend = |src_c: u8, dst_c: u8| -> u8 {
         let src_color = src_c as f32;
         let dst_color = dst_c as f32;
-        let result_color = src_color + (dst_color - src_color) * t;
-        result_color as u8
+        (dst_color * t + src_color * (1.0 - t)) as u8
     };
 
     Color32::from_rgba_premultiplied(
