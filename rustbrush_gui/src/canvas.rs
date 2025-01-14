@@ -1,7 +1,7 @@
 use crate::user::{BrushStrokeFrame, BrushStrokeKind};
 use eframe::egui::{self, Color32};
 use image::{ImageBuffer, Rgba};
-use rustbrush_utils::operations::{PaintOperation, SmearOperation};
+use rustbrush_utils::operations::{PaintOperation, SmudgeOperation};
 
 #[derive(Clone)]
 pub struct CanvasLayer {
@@ -148,11 +148,11 @@ impl Canvas {
 
     fn smudge(&mut self, layer: usize, frame: &BrushStrokeFrame) {
         self.layers()[layer].mark_dirty();
-        SmearOperation {
+        SmudgeOperation {
             brush: &frame.brush,
             cursor_position: (frame.cursor_position.x, frame.cursor_position.y),
             last_cursor_position: (frame.last_cursor_position.x, frame.last_cursor_position.y),
-            smear_strength: 1.0, // @todo: doesn't belong here, infact can probably just use opacity
+            smudge_strength: 1.0, // @todo: doesn't belong here, infact can probably just use opacity
             pixel_buffer: &mut self.state.layers[layer].pixels,
             pixel_buffer_width: self.state.width,
             pixel_buffer_height: self.state.height,

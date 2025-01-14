@@ -59,17 +59,17 @@ impl PaintOperation<'_> {
     }
 }
 
-pub struct SmearOperation<'a> {
+pub struct SmudgeOperation<'a> {
     pub pixel_buffer: &'a mut Vec<Color32>,
     pub pixel_buffer_width: u32,
     pub pixel_buffer_height: u32,
     pub brush: &'a Brush,
     pub cursor_position: (f32, f32),
     pub last_cursor_position: (f32, f32),
-    pub smear_strength: f32,
+    pub smudge_strength: f32,
 }
 
-impl SmearOperation<'_> {
+impl SmudgeOperation<'_> {
     pub fn process(self) {
         let (x0, y0) = (self.last_cursor_position.0, self.last_cursor_position.1);
         let (x1, y1) = (self.cursor_position.0, self.cursor_position.1);
@@ -95,11 +95,11 @@ impl SmearOperation<'_> {
 
                 if target_px_in_bounds((px, py), self.pixel_buffer_width, self.pixel_buffer_height)
                 {
-                    let smear_dx = -dx * self.smear_strength;
-                    let smear_dy = -dy * self.smear_strength;
+                    let smudge_dx = -dx * self.smudge_strength;
+                    let smudge_dy = -dy * self.smudge_strength;
 
-                    let target_px = (px as f32 + smear_dx) as i32;
-                    let target_py = (py as f32 + smear_dy) as i32;
+                    let target_px = (px as f32 + smudge_dx) as i32;
+                    let target_py = (py as f32 + smudge_dy) as i32;
 
                     if target_px_in_bounds(
                         (target_px, target_py),
@@ -107,15 +107,15 @@ impl SmearOperation<'_> {
                         self.pixel_buffer_height,
                     ) {
                         let stamp_alpha = pixel.color.a() as f32 / 255.0;
-                        let smear_strength = stamp_alpha * self.smear_strength;
+                        let smudge_strength = stamp_alpha * self.smudge_strength;
 
-                        if smear_strength > 0.0 {
+                        if smudge_strength > 0.0 {
                             let index = (py * self.pixel_buffer_width as i32 + px) as usize;
                             let target_index =
                                 (target_py * self.pixel_buffer_width as i32 + target_px) as usize;
                             let current_color = self.pixel_buffer[index];
                             let target_color = self.pixel_buffer[target_index];
-                            self.pixel_buffer[index] = blend_color32(current_color, target_color, smear_strength);
+                            self.pixel_buffer[index] = blend_color32(current_color, target_color, smudge_strength);
                         }
                     }
                 }
