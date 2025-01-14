@@ -83,7 +83,7 @@ impl eframe::App for App {
 
         // Top panel
         let mut new_brush_radius = self.user.current_paint_brush.radius();
-        let mut new_brush_color = self.user.current_color.to_srgba_unmultiplied();
+        let mut new_brush_color = self.user.current_color.to_array();
         let mut canvas_rect = Rect::NOTHING;
 
         egui::TopBottomPanel::top("controls").show(ctx, |ui| {
@@ -97,7 +97,7 @@ impl eframe::App for App {
                     self.canvas.add_layer();
                 }
                 ui.add(egui::Slider::new(&mut new_brush_radius, 1.0..=20.0).text("Brush Size"));
-                ui.color_edit_button_srgba_unmultiplied(&mut new_brush_color);
+                ui.color_edit_button_rgba_unmultiplied(&mut new_brush_color);
                 ui.separator();
                 ui.label("View:");
                 if ui.button("Reset View").clicked() {
@@ -178,7 +178,7 @@ impl eframe::App for App {
 
         // Apply state updates
         self.user.current_paint_brush.set_radius(new_brush_radius);
-        self.user.current_color = Rgba::from_srgba_unmultiplied(
+        self.user.current_color = Rgba::from_rgba_premultiplied(
             new_brush_color[RED_CHANNEL],
             new_brush_color[GREEN_CHANNEL],
             new_brush_color[BLUE_CHANNEL],

@@ -1,7 +1,6 @@
-use std::ops::Add;
 use ecolor::{Color32, Rgba};
 
-use crate::Brush;
+use crate::{Brush, RgbaExtensions};
 
 pub struct PaintOperation<'a> {
     pub pixel_buffer: &'a mut Vec<Color32>,
@@ -26,8 +25,7 @@ impl PaintOperation<'_> {
         let min_spacing = self.brush.radius() * self.brush.spacing();
         let steps = (distance / min_spacing).max(1.0) as i32;
 
-        let paint_color = Rgba::from(self.color);
-        let stamp = self.brush.compute_stamp(self.color);
+        let stamp = self.brush.compute_stamp();
 
         for i in 0..=steps {
             let t = i as f32 / steps as f32;
@@ -38,19 +36,30 @@ impl PaintOperation<'_> {
                 let px = (x + stamp_pixel.x as f32) as i32;
                 let py = (y + stamp_pixel.y as f32) as i32;
 
+                if stamp_pixel.color.a() <= 0.0 {
+                    continue;
+                }
+
                 if target_px_in_bounds((px, py), self.canvas_width, self.canvas_height) {
                     let index = (py * self.canvas_width as i32 + px) as usize;
                     let current_color = Rgba::from(self.pixel_buffer[index]);
-                    let stamp_alpha = Rgba::from(stamp_pixel.color).a();
+                    let brush_color = Rgba::from_rgba_premultiplied(
+                        self.color.r(),
+                        self.color.g(),
+                        self.color.b(),
+                        self.color.a() * stamp_pixel.color.a(),
+                    );
 
-                    self.pixel_buffer[index] = Color32::from(
-                        current_color + paint_color * (stamp_alpha * self.brush.strength()),
-                    ).additive();
+                    let final_color = Color32::from(brush_color.overlay(&current_color));
+                    if final_color.a() > 0 {
+                        self.pixel_buffer[index] = final_color;
+                    }
                 }
             }
         }
     }
 }
+
 
 pub struct SmudgeOperation<'a> {
     pub pixel_buffer: &'a mut Vec<Color32>,
@@ -74,7 +83,7 @@ impl SmudgeOperation<'_> {
         let min_spacing = self.brush.radius() * self.brush.spacing();
         let steps = (distance / min_spacing).max(1.0) as i32;
 
-        let stamp = self.brush.compute_stamp(Rgba::WHITE);
+        let stamp = self.brush.compute_stamp();
 
         for i in 0..=steps {
             let t = i as f32 / steps as f32;
