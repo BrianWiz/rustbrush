@@ -87,7 +87,7 @@ impl eframe::App for App {
 
         egui::TopBottomPanel::top("controls").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.heading("Pixel Painter");
+                ui.heading("Brushy");
                 ui.separator();
                 if ui.button("Clear Layer").clicked() {
                     self.canvas.clear_layer(self.user.current_layer);

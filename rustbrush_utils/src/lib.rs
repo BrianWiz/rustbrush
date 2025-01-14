@@ -11,7 +11,7 @@ pub const ALPHA_CHANNEL: usize = 3;
 pub struct Pixel {
     pub x: i32,
     pub y: i32,
-    pub color: [u8; 4],
+    pub color: Color32,
 }
 
 /// A stamp is a collection of pixels that represent a brush shape.
@@ -156,7 +156,7 @@ pub fn soft_circle(radius: f32, hardness: f32, opacity: f32, color: ecolor::Colo
                 pixels.push(Pixel {
                     x,
                     y,
-                    color: [color[0], color[1], color[2], alpha],
+                    color: Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), alpha),
                 });
             }
         }
